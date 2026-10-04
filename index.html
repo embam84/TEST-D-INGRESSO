@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test di Competenza AI per Docenti - Dashboard LIM</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-700 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold">Test di Competenza AI - Scuola Media</h1>
+                <p class="text-indigo-200 text-sm">Strumento interattivo per la formazione dei docenti e proiezione LIM</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchView('student')" id="btn-student" class="px-4 py-2 bg-indigo-800 hover:bg-indigo-900 text-white text-sm font-medium rounded-lg transition shadow">Modalità Docente (Test)</button>
+                <button onclick="switchView('lim')" id="btn-lim" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition shadow">Dashboard LIM (Aggregata)</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- STUDENT VIEW -->
+        <div id="view-student" class="space-y-6">
+            <!-- Welcome Card / Name Input -->
+            <div id="card-login" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center max-w-lg mx-auto">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">AI</div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Benvenuto al Test Formativo</h2>
+                <p class="text-slate-600 text-sm mb-6">Inserisci il tuo nome o un identificativo per iniziare il test. Le tue risposte confluiranno in forma anonima nel grafico aggregato.</p>
+                <input type="text" id="student-name" placeholder="Nome e Cognome (o Nickname)" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 text-center text-lg">
+                <button onclick="startQuiz()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md">Inizia il Test</button>
+            </div>
+
+            <!-- Quiz Card -->
+            <div id="card-quiz" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 hidden">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <span id="question-progress" class="text-sm font-semibold text-indigo-600 uppercase tracking-wider">Domanda 1 di 10</span>
+                    <span id="timer" class="text-xs font-medium bg-slate-100 text-slate-600 px-3 py-1 rounded-full">Sessione Attiva</span>
+                </div>
+                
+                <h3 id="question-text" class="text-xl font-bold text-slate-900 mb-6">Testo della domanda qui...</h3>
+                
+                <div id="options-container" class="space-y-3 mb-8">
+                    <!-- Opzioni generate dinamicamente -->
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <button id="btn-prev" onclick="prevQuestion()" class="px-5 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl transition disabled:opacity-50" disabled>Precedente</button>
+                    <button id="btn-next" onclick="nextQuestion()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition shadow">Successiva</button>
+                </div>
+            </div>
+
+            <!-- Quiz Completed Card -->
+            <div id="card-completed" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center max-w-lg mx-auto hidden">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">✓</div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">Test Completato con Successo!</h2>
+                <p class="text-slate-600 text-sm mb-6">Le tue risposte sono state registrate in modo anonimo nel sistema aggregato.</p>
+                <div class="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
+                    <span class="text-sm text-slate-500">Il tuo punteggio:</span>
+                    <div id="final-score" class="text-3xl font-extrabold text-indigo-600 mt-1">0 / 10</div>
+                </div>
+                <button onclick="switchView('lim')" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md">Visualizza Risultati sulla LIM</button>
+            </div>
+        </div>
+
+        <!-- LIM VIEW (AGGREGATED DASHBOARD) -->
+        <div id="view-lim" class="space-y-6 hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Dashboard LIM - Risultati Aggregati</h2>
+                        <p class="text-slate-500 text-sm">Panoramica collettiva anonima per il confronto in aula</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span id="total-submissions" class="bg-indigo-50 text-indigo-700 font-semibold px-4 py-2 rounded-xl text-sm border border-indigo-100">Partecipanti: 0</span>
+                        <button onclick="resetData()" class="text-xs text-red-600 hover:text-red-800 underline font-medium">Azzera Dati</button>
+                    </div>
+                </div>
+
+                <!-- Selettore Domanda per dettaglio grafico -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Seleziona domanda da analizzare:</label>
+                    <select id="lim-question-select" onchange="renderLimChart()" class="w-full px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        <!-- Popolato via JS -->
+                    </select>
+                </div>
+
+                <!-- Grafico a Barre Aggregato -->
+                <div id="lim-chart-container" class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <!-- Barre generate via JS -->
+                </div>
+
+                <!-- Spiegazione / Rationale Didattico -->
+                <div id="lim-rationale-box" class="mt-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-900 text-sm leading-relaxed">
+                    <!-- Spiegazione dettagliata -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-slate-400 text-xs">
+        Corso AI Formazione Docenti • Progettato per LIM e Didattica Attiva
+    </footer>
+
+    <!-- Script Logica Applicativa -->
+    <script>
+        const quizData = [
+            {
+                id: 1,
+                question: "Nel contesto dell'Intelligenza Artificiale, cosa si intende comunemente per apprendimento automatico (Machine Learning)?",
+                options: [
+                    "La capacità dei sistemi di migliorare le proprie prestazioni analizzando grandi moli di dati senza essere esplicitamente programmati.",
+                    "Un sistema hardware avanzato in grado di sostituire completamente il giudizio umano nella valutazione scolastica.",
+                    "Un software che traduce automaticamente i testi scritti in formato cartaceo in file audio.",
+                    "La programmazione manuale di regole rigide eseguite a velocità elevatissima dai computer."
+                ],
+                correctIndex: 0,
+                rationale: "Il Machine Learning si basa su algoritmi che identificano pattern nei dati e migliorano autonomamente nel tempo, a differenza della programmazione tradizionale basata su regole fisse."
+            },
+            {
+                id: 2,
+                question: "Quale tra le seguenti azioni rappresenta un uso eticamente consapevole ed efficace dell'AI generativa da parte di un docente?",
+                options: [
+                    "Delegare totalmente all'AI la stesura dei giudizi quadrimestrali di tutti gli studenti.",
+                    "Utilizzarla come supporto per strutturare bozze di unità di apprendimento, personalizzandole poi criticamente per la propria classe.",
+                    "Copiare integralmente le verifiche generate dal chatbot senza effettuare alcun controllo sulle domande.",
+                    "Vietare l'uso di qualsiasi strumento digitale basato su modelli linguistici."
+                ],
+                correctIndex: 1,
+                rationale: "L'AI generativa eccelle come coadiuvante nella fase di bozza e scaffolding, ma la validazione pedagogica e la personalizzazione restano responsabilità esclusiva e critica del docente."
+            },
+            {
+                id: 3,
+                question: "Nel Prompt Engineering, quale tecnica risulta più efficace per guidare un modello linguistico (LLM) a generare una verifica scolastica di livello adeguato?",
+                options: [
+                    "Scrivere comandi estremamente sintetici come 'Fai una verifica'.",
+                    "Fornire un contesto chiaro, specificando il ruolo del sistema, il target degli studenti, gli obiettivi di apprendimento e il formato desiderato.",
+                    "Inserire un numero elevato di punti esclamativi per pretendere maggiore rigore scientifico.",
+                    "Chiedere al modello di inventare domande casuali senza specificare l'argomento."
+                ],
+                correctIndex: 1,
+                rationale: "I prompt strutturati che definiscono chiaramente il ruolo (persona), il contesto, il pubblico di riferimento e i vincoli riducono drasticamente le risposte generiche o inadatte."
+            },
+            {
+                id: 4,
+                question: "Cosa si intende con il termine allucinazione (hallucination) nei sistemi di Intelligenza Artificiale generativa?",
+                options: [
+                    "Un errore temporaneo di connessione internet durante la generazione del testo.",
+                    "La visualizzazione di immagini in 3D generate tramite visori di realtà virtuale.",
+                    "La generazione da parte del modello di informazioni false, inventate o distorte presentate però come dati fattuali.",
+                    "La capacità del chatbot di simulare emozioni umane complesse."
+                ],
+                correctIndex: 2,
+                rationale: "Le allucinazioni avvengono perché gli LLM calcolano la parola probabilisticamente più probabile anziché verificare la verità fattuale, inventando talvolta citazioni o dati inesistenti."
+            },
+            {
+                id: 5,
+                question: "Quale tra le seguenti attività didattiche con l'AI favorisce maggiormente lo sviluppo del pensiero critico in studenti di scuola media?",
+                options: [
+                    "Accettare come verità assoluta qualsiasi risposta fornita da un chatbot.",
+                    "Chiedere agli studenti di verificare la veridicità delle fonti e dei dati storici generati da un chatbot su un determinato argomento.",
+                    "Lasciare che l'AI svolga interamente i compiti di casa al posto degli alunni.",
+                    "Memorizzare le definizioni tecniche dei parametri di funzionamento delle reti neurali."
+                ],
+                correctIndex: 1,
+                rationale: "Far fact-checkare l'output dell'AI insegna ai ragazzi a non subire passivamente la tecnologia, stimolando la verifica delle fonti e l'argomentazione critica."
+            },
+            {
+                id: 6,
+                question: "Nel contesto della privacy scolastica, quale precauzione è fondamentale adottare quando si sperimenta l'AI con i ragazzi?",
+                options: [
+                    "Condividere pubblicamente i registri elettronici e i voti della classe sui social network dell'AI.",
+                    "Utilizzare piattaforme conformi alle normative vigenti ed evitare l'inserimento di dati identificativi degli alunni.",
+                    "Permettere agli studenti di inserire liberamente i propri dati anagrafici e indirizzi di casa nei chatbot liberi.",
+                    "Non informare le famiglie sull'uso di strumenti digitali a scuola."
+                ],
+                correctIndex: 1,
+                rationale: "Il rispetto del GDPR e della privacy richiede la massima tutela dei dati personali dei minori, evitando l'immissione di informazioni sensibili o identificabili nei prompt."
+            },
+            {
+                id: 7,
+                question: "Qual è il principale vantaggio dell'uso di strumenti di intelligenza artificiale per la personalizzazione della didattica?",
+                options: [
+                    "Uniformare il livello della classe eliminando qualsiasi differenza di apprendimento.",
+                    "Adattare la complessità e il linguaggio dei testi esplicativi in base ai diversi livelli di apprendimento presenti nella classe.",
+                    "Valutare automaticamente gli studenti senza correggere i loro elaborati.",
+                    "Velocizzare la chiusura dei programmi ministeriali."
+                ],
+                correctIndex: 1,
+                rationale: "L'AI supporta la differenziazione didattica permettendo di rimodulare spiegazioni e materiali per alunni con bisogni educativi speciali o diversi stili cognitivi."
+            },
+            {
+                id: 8,
+                question: "Cosa si intende per 'bias algoritmico' (pregiudizio algoritmico) nei sistemi di intelligenza artificiale?",
+                options: [
+                    "Un guasto meccanico nei server che gestiscono il calcolo matematico.",
+                    "La preferenza del computer per i linguaggi di programmazione moderni rispetto a quelli storici.",
+                    "La tendenza del sistema a riprodurre o amplificare stereotipi e discriminazioni presenti nei dati storici usati per l'addestramento.",
+                    "La velocità di elaborazione dei dati dipendente esclusivamente dalla connessione."
+                ],
+                correctIndex: 2,
+                rationale: "I modelli apprendono dai dati umani storici, ereditandone pregiudizi e distorsioni sociali se non opportunamente filtrati e monitorati."
+            },
+            {
+                id: 9,
+                question: "Quale approccio metodologico è consigliabile per introdurre l'uso dei chatbot testuali agli studenti di scuola media?",
+                options: [
+                    "Un percorso laboratoriale guidato in cui si analizzano insieme sia le potenzialità che i limiti e gli errori evidenti dell'AI.",
+                    "Una lezione frontale puramente teorica di tre ore senza esercitazioni pratiche.",
+                    "L'abbandono totale degli studenti all'uso autonomo e incontrollato dei dispositivi.",
+                    "L'utilizzo esclusivo per copiare le soluzioni dei problemi di matematica."
+                ],
+                correctIndex: 0,
+                rationale: "Un approccio laboratoriale e critico permette di svelare la natura probabilistica dello strumento, educando a un uso consapevole e responsabile."
+            },
+            {
+                id: 10,
+                question: "Quale tra le seguenti affermazioni descrive correttamente il rapporto tra docente e intelligenza artificiale nella scuola di oggi?",
+                options: [
+                    "L'insegnante è destinato a essere completamente sostituito dai sistemi automatizzati entro pochi mesi.",
+                    "L'AI è un coadiuvante potente che supporta il lavoro di progettazione e personalizzazione, ma la guida educativa resta saldamente in mano al docente.",
+                    "L'intelligenza artificiale non ha alcuna utilità pratica nell'ambito della didattica scolastica.",
+                    "Il docente deve supervisionare l'AI solo per aspetti amministrativi e mai didattici."
+                ],
+                correctIndex: 1,
+                rationale: "La tecnologia potenzia l'azione del docente ma non può replicare l'empatia, la relazione educativa e il giudizio pedagogico umano."
+            }
+        ];
+
+        // State Management LocalStorage
+        let currentStudent = "";
+        let currentQuestionIndex = 0;
+        let studentAnswers = {}; // { questionIndex: selectedOptionIndex }
+        
+        function getSubmissions() {
+            const data = localStorage.getItem('ai_quiz_submissions');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveSubmission(name, answers) {
+            let subs = getSubmissions();
+            // Rimuovi eventuale precedente invio dello stesso utente
+            subs = subs.filter(s => s.name !== name);
+            subs.push({ name, answers, timestamp: new Date().toISOString() });
+            localStorage.setItem('ai_quiz_submissions', JSON.stringify(subs));
+        }
+
+        // Navigation Views
+        function switchView(view) {
+            document.getElementById('view-student').classList.add('hidden');
+            document.getElementById('view-lim').classList.add('hidden');
+            
+            if (view === 'student') {
+                document.getElementById('view-student').classList.remove('hidden');
+            } else if (view === 'lim') {
+                document.getElementById('view-lim').classList.remove('hidden');
+                initLimDashboard();
+            }
+        }
+
+        // Student Flow
+        function startQuiz() {
+            const nameInput = document.getElementById('student-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert("Per favore, inserisci il tuo nome o un nickname per iniziare.");
+                return;
+            }
+            currentStudent = name;
+            studentAnswers = {};
+            currentQuestionIndex = 0;
+
+            document.getElementById('card-login').classList.add('hidden');
+            document.getElementById('card-completed').classList.add('hidden');
+            document.getElementById('card-quiz').classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = quizData[currentQuestionIndex];
+            document.getElementById('question-progress').innerText = `Domanda ${currentQuestionIndex + 1} di ${quizData.length}`;
+            document.getElementById('question-text').innerText = q.question;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = studentAnswers[currentQuestionIndex] === idx;
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-4 rounded-xl border transition flex items-start gap-3 ${
+                    isSelected 
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-950 font-medium ring-2 ring-indigo-500/20' 
+                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
+                }`;
+                btn.innerHTML = `
+                    <span class="flex-shrink-0 w-6 h-6 rounded-full border border-slate-300 flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-indigo-600 text-white border-indigo-600' : 'text-slate-500'}">${String.fromCharCode(65 + idx)}</span>
+                    <span class="leading-relaxed">${opt}</span>
+                `;
+                btn.onclick = () => selectOption(idx);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
+            document.getElementById('btn-next').innerText = currentQuestionIndex === quizData.length - 1 ? "Termina e Invia" : "Successiva";
+        }
+
+        function selectOption(idx) {
+            studentAnswers[currentQuestionIndex] = idx;
+            loadQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (studentAnswers[currentQuestionIndex] === undefined) {
+                alert("Seleziona una risposta prima di procedere.");
+                return;
+            }
+
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                // Fine test, salva e mostra completamento
+                saveSubmission(currentStudent, studentAnswers);
+                
+                // Calcola punteggio
+                let score = 0;
+                quizData.forEach((q, idx) => {
+                    if (studentAnswers[idx] === q.correctIndex) score++;
+                });
+
+                document.getElementById('card-quiz').classList.add('hidden');
+                document.getElementById('card-completed').classList.remove('hidden');
+                document.getElementById('final-score').innerText = `${score} / ${quizData.length}`;
+            }
+        }
+
+        // LIM Dashboard Logic
+        function initLimDashboard() {
+            const select = document.getElementById('lim-question-select');
+            select.innerHTML = '';
+            quizData.forEach((q, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.innerText = `Domanda ${idx + 1}: ${q.question.substring(0, 60)}...`;
+                select.appendChild(opt);
+            });
+            renderLimChart();
+        }
+
+        function renderLimChart() {
+            const qIdx = parseInt(document.getElementById('lim-question-select').value);
+            const q = quizData[qIdx];
+            const submissions = getSubmissions();
+            
+            document.getElementById('total-submissions').innerText = `Partecipanti totali: ${submissions.length}`;
+
+            // Calcola frequenze risposte
+            const counts = [0, 0, 0, 0];
+            submissions.forEach(sub => {
+                const ans = sub.answers[qIdx];
+                if (ans !== undefined && ans >= 0 && ans < 4) {
+                    counts[ans]++;
+                }
+            });
+
+            const totalVotes = submissions.length;
+            const container = document.getElementById('lim-chart-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const count = counts[idx];
+                const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                const isCorrect = idx === q.correctIndex;
+
+                const row = document.createElement('div');
+                row.className = "space-y-1";
+                row.innerHTML = `
+                    <div class="flex justify-between text-sm">
+                        <span class="font-medium ${isCorrect ? 'text-emerald-700 font-bold' : 'text-slate-700'}">
+                            ${String.fromCharCode(65 + idx)}. ${opt} ${isCorrect ? '✓ (Corretta)' : ''}
+                        </span>
+                        <span class="font-semibold text-slate-900">${count} (${percentage}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-4 rounded-full overflow-hidden">
+                        <div class="h-full transition-all duration-500 ${isCorrect ? 'bg-emerald-500' : 'bg-indigo-500'}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            // Mostra rationale didattico
+            document.getElementById('lim-rationale-box').innerHTML = `<strong>Approfondimento per il dibattito in aula:</strong> ${q.rationale}`;
+        }
+
+        function resetData() {
+            if (confirm("Vuoi azzerare tutti i dati salvati delle risposte?")) {
+                localStorage.removeItem('ai_quiz_submissions');
+                renderLimChart();
+                alert("Dati azzerati con successo.");
+            }
+        }
+    </script>
+</body>
+</html>
+```eof
+
+### Come puoi utilizzarlo con i docenti:
+1. **Condivisione individuale:** Salva questo codice come file `index.html` e aprilo in un browser o caricalo su una pagina web accessibile ai docenti (tramite link rapido o QR code in aula). Ciascun docente potrà inserire il proprio nome e svolgere il test in autonomia dal proprio smartphone o computer.
+2. **Proiezione sulla LIM:** Cliccando in alto su **"Dashboard LIM (Aggregata)"**, potrai proiettare sulla LIM l'andamento in tempo reale delle risposte di tutta la classe con grafici a barre percentuali immediati.
+3. **Verifica e Discussione:** Selezionando le singole domande sulla dashboard, avrai sottomano il box con il rationale pedagogico per guidare il dibattito e correggere eventuali misconcetti emersi nel gruppo.
+
+Buon proseguimento con il corso di formazione!
